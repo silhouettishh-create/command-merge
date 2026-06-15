@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "commandmerge",
+  "version": "${version}",
+  "name": "Command Merge & Wait",
+  "description": "Adds MERGE and WAIT_TICK:N syntax to command blocks so one block can run a sequence of commands, optionally with tick delays, without chain command blocks.",
+  "authors": [
+    "You"
+  ],
+  "contact": {},
+  "license": "CC0-1.0",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.example.commandmerge.CommandMergeMod"
+    ]
+  },
+  "mixins": [
+    "commandmerge.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "26.1.x",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
