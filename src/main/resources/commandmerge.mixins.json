@@ -7,7 +7,7 @@
     "CommandsMixin"
   ],
   "client": [
-    "CommandSuggestionsMixin"
+    "SuggestionsMixin"
   ],
   "injectors": {
     "defaultRequire": 1
