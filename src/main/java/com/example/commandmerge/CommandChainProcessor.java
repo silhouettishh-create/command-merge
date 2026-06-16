@@ -6,12 +6,15 @@ import net.minecraft.server.MinecraftServer;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class CommandChainProcessor {
 
     private static final Pattern MERGE_SPLIT = Pattern.compile("\\s+MERGE\\s+");
     private static final Pattern WAIT_PREFIX =
             Pattern.compile("^WAIT_TICK:(\\d+)\\s+(.*)$", Pattern.DOTALL);
+    
+    private static final AtomicLong TASK_COUNTER = new AtomicLong(0);
 
     private CommandChainProcessor() {}
 
@@ -21,6 +24,8 @@ public final class CommandChainProcessor {
 
     public static void process(Commands commands, CommandSourceStack source, String fullCommand) {
         MinecraftServer server = source.getServer();
+        if (server == null) return;
+        
         String[] parts = MERGE_SPLIT.split(fullCommand.trim());
         long cumulativeDelay = 0;
 
@@ -30,10 +35,15 @@ public final class CommandChainProcessor {
 
             Matcher waitMatch = WAIT_PREFIX.matcher(part);
             if (waitMatch.matches()) {
-                long waitTicks = Long.parseLong(waitMatch.group(1));
-                String cmd = waitMatch.group(2).trim();
-                cumulativeDelay += waitTicks;
-                runOrSchedule(commands, source, cmd, server, cumulativeDelay);
+                try {
+                    long waitTicks = Long.parseLong(waitMatch.group(1));
+                    String cmd = waitMatch.group(2).trim();
+                    cumulativeDelay += waitTicks;
+                    runOrSchedule(commands, source, cmd, server, cumulativeDelay);
+                } catch (NumberFormatException e) {
+                    source.sendFailure(net.minecraft.network.chat.Component.literal(
+                            "Invalid WAIT_TICK value: " + waitMatch.group(1)));
+                }
             } else {
                 runOrSchedule(commands, source, part, server, cumulativeDelay);
             }
@@ -46,8 +56,8 @@ public final class CommandChainProcessor {
             commands.performPrefixedCommand(source, command);
         } else {
             long targetTick = server.getTickCount() + delayTicks;
-            // Key prevents repeating blocks from flooding the queue
-            String key = command + "@" + delayTicks;
+            String key = "cmd_" + TASK_COUNTER.incrementAndGet();
+            
             TickScheduler.schedule(targetTick, key,
                     () -> commands.performPrefixedCommand(source, command));
         }
