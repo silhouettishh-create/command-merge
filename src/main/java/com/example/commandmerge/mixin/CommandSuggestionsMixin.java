@@ -14,9 +14,12 @@ public class CommandSuggestionsMixin {
     @Inject(method = "formatChat", at = @At("RETURN"), cancellable = true)
     private void commandmerge$highlight(String text, int cursor,
                                          CallbackInfoReturnable<FormattedCharSequence> cir) {
-        FormattedCharSequence highlighted = CommandHighlightHelper.highlight(text);
-        if (highlighted != null) {
-            cir.setReturnValue(highlighted);
+        // Only process if MERGE or WAIT_TICK is in the command
+        if (text.contains(" MERGE ") || text.contains("WAIT_TICK:")) {
+            FormattedCharSequence highlighted = CommandHighlightHelper.highlight(text);
+            if (highlighted != null) {
+                cir.setReturnValue(highlighted);
+            }
         }
     }
 }
