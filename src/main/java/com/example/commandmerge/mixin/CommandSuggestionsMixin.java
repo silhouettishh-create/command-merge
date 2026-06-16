@@ -11,11 +11,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(CommandSuggestions.class)
 public class CommandSuggestionsMixin {
 
-	@Inject(method = "formatChat", at = @At("RETURN"), cancellable = true)
-	private void commandmerge$highlight(String text, int cursor, CallbackInfoReturnable<FormattedCharSequence> cir) {
-		FormattedCharSequence highlighted = CommandHighlightHelper.highlight(text, cir.getReturnValue());
-		if (highlighted != null) {
-			cir.setReturnValue(highlighted);
-		}
-	}
+    @Inject(method = "formatChat", at = @At("RETURN"), cancellable = true)
+    private void commandmerge$highlight(String text, int cursor,
+                                         CallbackInfoReturnable<FormattedCharSequence> cir) {
+        FormattedCharSequence highlighted = CommandHighlightHelper.highlight(text);
+        if (highlighted != null) {
+            cir.setReturnValue(highlighted);
+        }
+    }
 }
