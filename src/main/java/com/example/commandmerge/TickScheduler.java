@@ -18,18 +18,25 @@ public final class TickScheduler {
     private TickScheduler() {}
 
     public static synchronized void schedule(long runAtTick, String key, Runnable task) {
-        if (PENDING_KEYS.contains(key)) return;
+        if (key == null || task == null) {
+            throw new IllegalArgumentException("Key and task cannot be null");
+        }
+        if (PENDING_KEYS.contains(key)) {
+            return; // Prevent duplicate scheduling
+        }
         PENDING_KEYS.add(key);
         TASKS.add(new ScheduledTask(runAtTick, key, task));
     }
 
     public static void onEndTick(MinecraftServer server) {
-        List<Runnable> due;
+        List<Runnable> due = new ArrayList<>();
+        
         synchronized (TickScheduler.class) {
             if (TASKS.isEmpty()) return;
+            
             long now = server.getTickCount();
-            due = new ArrayList<>();
             Iterator<ScheduledTask> it = TASKS.iterator();
+            
             while (it.hasNext()) {
                 ScheduledTask t = it.next();
                 if (t.runAtTick() <= now) {
@@ -39,6 +46,15 @@ public final class TickScheduler {
                 }
             }
         }
-        for (Runnable r : due) r.run();
+        
+        // Execute outside of synchronized block to prevent blocking
+        for (Runnable r : due) {
+            try {
+                r.run();
+            } catch (Exception e) {
+                System.err.println("Error executing scheduled task: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 }
